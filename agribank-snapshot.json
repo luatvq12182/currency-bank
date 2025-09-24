@@ -1,0 +1,161 @@
+{
+  "crawled_at": "2025-09-18T06:35:41.288Z",
+  "date_requested": null,
+  "date_applied": {
+    "changed": false,
+    "note": "no date requested"
+  },
+  "page_note_sample": "Khách hàng cá nhân Khách hàng doanh nghiệp Định chế tài chính Về Agribank Tin tức Tuyển dụng Hỏi đáp Liên hệ English\n 1900558818 / +842432053205\nKHÁCH HÀNG CÁ NHÂN Gửi tiền Agribank\n Vay vốn Agribank ",
+  "items": [
+    {
+      "bank": "agribank",
+      "code": "USD",
+      "name": "26,200.00",
+      "buy_cash": null,
+      "buy_transfer": 26205,
+      "sell": 26445,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "EUR",
+      "name": "30,560.00",
+      "buy_cash": null,
+      "buy_transfer": 30683,
+      "sell": 31784,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "GBP",
+      "name": "35,281.00",
+      "buy_cash": null,
+      "buy_transfer": 35423,
+      "sell": 36380,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "HKD",
+      "name": "3,326.00",
+      "buy_cash": null,
+      "buy_transfer": 3339,
+      "sell": 3442,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "CHF",
+      "name": "32,818.00",
+      "buy_cash": null,
+      "buy_transfer": 32950,
+      "sell": 33859,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "JPY",
+      "name": "175.33",
+      "buy_cash": null,
+      "buy_transfer": 176.03,
+      "sell": 183.29,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "AUD",
+      "name": "17,188.00",
+      "buy_cash": null,
+      "buy_transfer": 17257,
+      "sell": 17785,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "SGD",
+      "name": "20,272.00",
+      "buy_cash": null,
+      "buy_transfer": 20353,
+      "sell": 20882,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "THB",
+      "name": "806.00",
+      "buy_cash": null,
+      "buy_transfer": 809,
+      "sell": 844,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "CAD",
+      "name": "18,811.00",
+      "buy_cash": null,
+      "buy_transfer": 18887,
+      "sell": 19390,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "NZD",
+      "name": null,
+      "buy_cash": null,
+      "buy_transfer": 15346,
+      "sell": 15835,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "KRW",
+      "name": null,
+      "buy_cash": null,
+      "buy_transfer": 18.28,
+      "sell": 20.04,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "DKK",
+      "name": null,
+      "buy_cash": null,
+      "buy_transfer": 4107,
+      "sell": 4239,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "SEK",
+      "name": null,
+      "buy_cash": null,
+      "buy_transfer": 2779,
+      "sell": 2891,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    },
+    {
+      "bank": "agribank",
+      "code": "NOK",
+      "name": null,
+      "buy_cash": null,
+      "buy_transfer": 2625,
+      "sell": 2739,
+      "periodStart": "2025-09-17T17:00:00.000Z",
+      "source": "https://www.agribank.com.vn/vn/ty-gia"
+    }
+  ]
+}
