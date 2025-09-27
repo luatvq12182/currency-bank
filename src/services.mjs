@@ -204,57 +204,57 @@ export async function getBestToday(code, start, end) {
     const [sellDoc, buyCashDoc, buyTransferDoc] = await Promise.all([
         bestSell
             ? RateSnapshot.findOne({
-                  bank: bestSell.bank,
-                  code,
-                  periodStart: { $gte: start, $lte: end },
-                  sell: bestSell.value,
-              })
-                  .sort({ periodStart: -1 })
-                  .lean()
+                bank: bestSell.bank,
+                code,
+                periodStart: { $gte: start, $lte: end },
+                sell: bestSell.value,
+            })
+                .sort({ periodStart: -1 })
+                .lean()
             : null,
         bestBuyCash
             ? RateSnapshot.findOne({
-                  bank: bestBuyCash.bank,
-                  code,
-                  periodStart: { $gte: start, $lte: end },
-                  buy_cash: bestBuyCash.value,
-              })
-                  .sort({ periodStart: -1 })
-                  .lean()
+                bank: bestBuyCash.bank,
+                code,
+                periodStart: { $gte: start, $lte: end },
+                buy_cash: bestBuyCash.value,
+            })
+                .sort({ periodStart: -1 })
+                .lean()
             : null,
         bestBuyTransfer
             ? RateSnapshot.findOne({
-                  bank: bestBuyTransfer.bank,
-                  code,
-                  periodStart: { $gte: start, $lte: end },
-                  buy_transfer: bestBuyTransfer.value,
-              })
-                  .sort({ periodStart: -1 })
-                  .lean()
+                bank: bestBuyTransfer.bank,
+                code,
+                periodStart: { $gte: start, $lte: end },
+                buy_transfer: bestBuyTransfer.value,
+            })
+                .sort({ periodStart: -1 })
+                .lean()
             : null,
     ]);
 
     return {
         best_sell: bestSell
             ? {
-                  bank: bestSell.bank,
-                  value: bestSell.value,
-                  at: sellDoc?.periodStart ?? null,
-              }
+                bank: bestSell.bank,
+                value: bestSell.value,
+                at: sellDoc?.periodStart ?? null,
+            }
             : null,
         best_buy_cash: bestBuyCash
             ? {
-                  bank: bestBuyCash.bank,
-                  value: bestBuyCash.value,
-                  at: buyCashDoc?.periodStart ?? null,
-              }
+                bank: bestBuyCash.bank,
+                value: bestBuyCash.value,
+                at: buyCashDoc?.periodStart ?? null,
+            }
             : null,
         best_buy_transfer: bestBuyTransfer
             ? {
-                  bank: bestBuyTransfer.bank,
-                  value: bestBuyTransfer.value,
-                  at: buyTransferDoc?.periodStart ?? null,
-              }
+                bank: bestBuyTransfer.bank,
+                value: bestBuyTransfer.value,
+                at: buyTransferDoc?.periodStart ?? null,
+            }
             : null,
     };
 }
@@ -326,4 +326,29 @@ export async function upsertSnapshotsFromPayload(itemsRaw) {
         modified: res.modifiedCount || 0,
         matched: res.matchedCount || 0,
     };
+}
+
+/** Lấy snapshot mới nhất của TẤT CẢ ngân hàng cho 1 currency code */
+export async function getLatestAllBanksByCode(code, fields = ["buy_cash", "buy_transfer", "sell"]) {
+    const allow = new Set(["buy_cash", "buy_transfer", "sell", "name", "source", "periodStart", "bank", "code", "createdAt", "updatedAt"]);
+    const proj = Object.fromEntries(
+        [...fields, "bank", "code", "periodStart", "source", "name"].filter(f => allow.has(f)).map(f => [f, 1])
+    );
+
+    const docs = await RateSnapshot.aggregate([
+        { $match: { code } },
+        { $sort: { bank: 1, periodStart: -1 } },          // sort trước
+        { $group: { _id: "$bank", doc: { $first: "$$ROOT" } } },  // lấy doc mới nhất mỗi bank
+        { $replaceWith: "$doc" },
+        { $project: proj },
+        { $sort: { bank: 1 } }
+    ]);
+
+    // “as_of” là mốc thời gian mới nhất trong tất cả bản ghi
+    const as_of = docs.reduce((mx, d) => {
+        const t = d.periodStart ? new Date(d.periodStart).getTime() : 0;
+        return t > mx ? t : mx;
+    }, 0);
+
+    return { as_of: as_of ? new Date(as_of) : null, items: docs };
 }

@@ -10,6 +10,7 @@ import {
     upsertSnapshotsFromPayload,
     normalizeSnapshotPayload,
     getHistoryDailyCloseMulti,
+    getLatestAllBanksByCode,
 } from "./services.mjs";
 import { addDays } from "date-fns";
 
@@ -228,9 +229,9 @@ router.get("/history", async (req, res) => {
             raw === "all"
                 ? ["buy_cash", "buy_transfer", "sell"]
                 : raw
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean);
+                    .split(",")
+                    .map((s) => s.trim())
+                    .filter(Boolean);
 
         const series = await getHistoryDailyCloseMulti(
             bank,
@@ -336,6 +337,39 @@ router.post("/admin/snapshots", async (req, res) => {
         res.json({ ok: true, count: raw.length, result: r });
     } catch (e) {
         res.status(400).json({ ok: false, message: e.message });
+    }
+});
+
+/** API: latest of ALL banks for one currency
+ * GET /api/latest-all?code=USD
+ * Optional: fields=all | buy_cash,buy_transfer | sell (mặc định all)
+ */
+router.get("/latest-all", async (req, res) => {
+    try {
+        const code = req.query.code?.toString().toUpperCase();
+        if (!code) return res.status(400).json({ error: "code required (e.g., USD)" });
+
+        const raw = (req.query.fields || "all").toString().toLowerCase();
+        const fields = raw === "all"
+            ? ["buy_cash", "buy_transfer", "sell"]
+            : raw.split(",").map(s => s.trim()).filter(Boolean);
+
+        const { as_of, items } = await getLatestAllBanksByCode(code, fields);
+
+        res.json({
+            code,
+            fields,
+            as_of,                // thời điểm mới nhất trong tập dữ liệu
+            banks: items.map(d => ({
+                bank: d.bank,
+                periodStart: d.periodStart,
+                name: d.name ?? null,
+                source: d.source ?? null,
+                ...Object.fromEntries(fields.map(f => [f, d[f] ?? null]))
+            }))
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
