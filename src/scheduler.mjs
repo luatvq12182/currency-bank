@@ -5,7 +5,7 @@ import { persistSnapshots, roundToHour } from "./services.mjs";
 export function startScheduler() {
     // chạy mỗi giờ, phút 0 (theo TZ=Asia/Bangkok trong env)
     cron.schedule(
-        "0 * * * *",
+        "0 */3 * * *",
         async () => {
             const at = new Date();
             console.log(

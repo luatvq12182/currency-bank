@@ -7,7 +7,7 @@ export const BANKS = [
     "acb",
     "agribank",
     "bidv",
-    "dongabank",
+    // "dongabank",
     "eximbank",
     "hsbc",
     "sacombank",
