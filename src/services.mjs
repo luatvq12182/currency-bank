@@ -352,3 +352,69 @@ export async function getLatestAllBanksByCode(code, fields = ["buy_cash", "buy_t
 
     return { as_of: as_of ? new Date(as_of) : null, items: docs };
 }
+
+/**
+ * Lấy tất cả currency pairs mới nhất của 1 ngân hàng,
+ * kèm so sánh với snapshot trước đó 24h.
+ */
+export async function getLatestAllPairsByBank(bank, fields = ["buy_cash", "buy_transfer", "sell"]) {
+    // lấy doc mới nhất mỗi code cho bank này
+    const latestDocs = await RateSnapshot.aggregate([
+        { $match: { bank } },
+        { $sort: { code: 1, periodStart: -1 } },
+        { $group: { _id: "$code", doc: { $first: "$$ROOT" } } },
+        { $replaceWith: "$doc" },
+        { $sort: { code: 1 } }
+    ]);
+
+    const fmtVND = new Intl.NumberFormat("vi-VN");
+    const signed = (v) => (v == null ? null : `${v > 0 ? "+" : v < 0 ? "" : ""}${fmtVND.format(v)} VND`);
+    const pctText = (v) => (v == null ? null : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(2)}%`);
+
+    const items = [];
+    for (const d of latestDocs) {
+        const cutoff = new Date(new Date(d.periodStart).getTime() - 24 * 3600 * 1000);
+
+        const prev = await RateSnapshot.findOne({
+            bank: d.bank,
+            code: d.code,
+            periodStart: { $lte: cutoff }
+        }).sort({ periodStart: -1 }).lean();
+
+        const deltas = {};
+        for (const f of fields) {
+            const latestVal = d[f] ?? null;
+            const prevVal = prev ? (prev[f] ?? null) : null;
+            const change = (latestVal != null && prevVal != null) ? (latestVal - prevVal) : null;
+            const pct = (change != null && prevVal) ? (change / prevVal) : null;
+            let trend = null;
+            if (change != null) trend = change > 0 ? "up" : change < 0 ? "down" : "flat";
+
+            deltas[f] = {
+                prev_value: prevVal,
+                change,
+                change_text: signed(change),
+                pct,
+                pct_text: pctText(pct),
+                trend
+            };
+        }
+
+        items.push({
+            code: d.code,
+            name: d.name ?? null,
+            periodStart: d.periodStart,
+            source: d.source ?? null,
+            ...Object.fromEntries(fields.map(f => [f, d[f] ?? null])),
+            deltas
+        });
+    }
+
+    // as_of: lấy max periodStart
+    const as_of = items.reduce((mx, it) => {
+        const t = it.periodStart ? new Date(it.periodStart).getTime() : 0;
+        return t > mx ? t : mx;
+    }, 0);
+
+    return { bank, as_of: as_of ? new Date(as_of) : null, items };
+}

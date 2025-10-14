@@ -11,6 +11,7 @@ import {
     normalizeSnapshotPayload,
     getHistoryDailyCloseMulti,
     getLatestAllBanksByCode,
+    getLatestAllPairsByBank,
 } from "./services.mjs";
 import { addDays } from "date-fns";
 
@@ -373,4 +374,32 @@ router.get("/latest-all", async (req, res) => {
     }
 });
 
+/** API: latest-all-pairs for one bank
+ * GET /api/latest-bank?bank=vietcombank
+ * Optional: fields=all | sell | buy_cash,buy_transfer
+ */
+router.get("/latest-bank", async (req, res) => {
+    try {
+        const bank = req.query.bank?.toString().toLowerCase();
+        if (!bank) return res.status(400).json({ error: "bank required (e.g., vietcombank)" });
+
+        const raw = (req.query.fields || "all").toString().toLowerCase();
+        const fields = raw === "all"
+            ? ["buy_cash", "buy_transfer", "sell"]
+            : raw.split(",").map(s => s.trim()).filter(Boolean);
+
+        const { as_of, items } = await getLatestAllPairsByBank(bank, fields);
+
+        res.json({
+            bank,
+            fields,
+            as_of,
+            pairs: items
+        });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 export default router;
+
