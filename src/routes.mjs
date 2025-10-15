@@ -12,6 +12,7 @@ import {
     getHistoryDailyCloseMulti,
     getLatestAllBanksByCode,
     getLatestAllPairsByBank,
+    getBankSupportedCurrencies,
 } from "./services.mjs";
 import { addDays } from "date-fns";
 
@@ -396,6 +397,42 @@ router.get("/latest-bank", async (req, res) => {
             as_of,
             pairs: items
         });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/** API: danh sách ngoại tệ mà 1 ngân hàng hỗ trợ
+ * GET /api/bank-currencies?bank=vietcombank
+ *
+ * Optional:
+ *  - includePrices=true|false        (mặc định false)  -> kèm giá mới nhất
+ *  - includeDeltas24h=true|false     (mặc định false)  -> kèm so sánh 24h (chỉ khi includePrices=true)
+ *  - fields=all | sell | buy_cash,buy_transfer        (mặc định all)
+ *  - sinceDays=365                   (lọc các mã có dữ liệu trong N ngày gần đây)
+ */
+router.get("/bank-currencies", async (req, res) => {
+    try {
+        const bank = req.query.bank?.toString().toLowerCase();
+        if (!bank) return res.status(400).json({ error: "bank required (e.g., vietcombank)" });
+
+        const rawFields = (req.query.fields || "all").toString().toLowerCase();
+        const fields = rawFields === "all"
+            ? ["buy_cash", "buy_transfer", "sell"]
+            : rawFields.split(",").map(s => s.trim()).filter(Boolean);
+
+        const includePrices = String(req.query.includePrices || "false").toLowerCase() === "true";
+        const includeDeltas24h = String(req.query.includeDeltas24h || "false").toLowerCase() === "true";
+        const sinceDays = Number(req.query.sinceDays || 365);
+
+        const payload = await getBankSupportedCurrencies(bank, {
+            sinceDays,
+            fields,
+            includePrices,
+            includeDeltas24h
+        });
+
+        res.json(payload);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }

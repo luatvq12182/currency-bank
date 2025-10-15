@@ -418,3 +418,103 @@ export async function getLatestAllPairsByBank(bank, fields = ["buy_cash", "buy_t
 
     return { bank, as_of: as_of ? new Date(as_of) : null, items };
 }
+
+/**
+ * Liệt kê các ngoại tệ một ngân hàng hỗ trợ.
+ * - bank: slug ngân hàng (vd 'vietcombank')
+ * - options:
+ *    - sinceDays: chỉ lấy các mã có dữ liệu trong N ngày gần đây (mặc định 365)
+ *    - fields: các trường giá muốn kèm theo nếu includePrices=true (mặc định buy_cash,buy_transfer,sell)
+ *    - includePrices: có trả kèm snapshot giá mới nhất cho mỗi mã không (mặc định false)
+ *    - includeDeltas24h: nếu includePrices=true, có tính so sánh 24h cho từng trường giá không (mặc định false)
+ */
+export async function getBankSupportedCurrencies(
+    bank,
+    { sinceDays = 365, fields = ["buy_cash", "buy_transfer", "sell"], includePrices = false, includeDeltas24h = false } = {}
+) {
+    const since = new Date();
+    since.setDate(since.getDate() - Number(sinceDays || 365));
+
+    // Lấy doc mới nhất cho MỖI code của bank trong khoảng kể từ 'since'
+    const latestPerCode = await RateSnapshot.aggregate([
+        { $match: { bank, periodStart: { $gte: since } } },
+        { $sort: { code: 1, periodStart: -1 } },
+        { $group: { _id: "$code", doc: { $first: "$$ROOT" } } },
+        { $replaceWith: "$doc" },
+        { $sort: { code: 1 } }
+    ]);
+
+    // Nếu chỉ cần danh sách mã + tên
+    if (!includePrices) {
+        return {
+            bank,
+            since,
+            count: latestPerCode.length,
+            currencies: latestPerCode.map(d => ({
+                code: d.code,
+                name: d.name ?? null,
+                last_updated: d.periodStart ?? null
+            }))
+        };
+    }
+
+    // Nếu cần kèm giá + (tuỳ chọn) deltas 24h
+    const fmtVND = new Intl.NumberFormat("vi-VN");
+    const signed = (v) => (v == null ? null : `${v > 0 ? "+" : v < 0 ? "" : ""}${fmtVND.format(v)} VND`);
+    const pctText = (v) => (v == null ? null : `${v >= 0 ? "+" : ""}${(v * 100).toFixed(2)}%`);
+
+    const items = [];
+    for (const d of latestPerCode) {
+        const out = {
+            code: d.code,
+            name: d.name ?? null,
+            periodStart: d.periodStart,
+            source: d.source ?? null,
+            ...Object.fromEntries(fields.map(f => [f, d[f] ?? null]))
+        };
+
+        if (includeDeltas24h) {
+            const cutoff = new Date(new Date(d.periodStart).getTime() - 24 * 3600 * 1000);
+            const prev = await RateSnapshot.findOne({
+                bank,
+                code: d.code,
+                periodStart: { $lte: cutoff }
+            }).sort({ periodStart: -1 }).lean();
+
+            const deltas = {};
+            for (const f of fields) {
+                const latestVal = d[f] ?? null;
+                const prevVal = prev ? (prev[f] ?? null) : null;
+                const change = (latestVal != null && prevVal != null) ? (latestVal - prevVal) : null;
+                const pct = (change != null && prevVal) ? (change / prevVal) : null;
+                let trend = null;
+                if (change != null) trend = change > 0 ? "up" : change < 0 ? "down" : "flat";
+
+                deltas[f] = {
+                    prev_value: prevVal,
+                    change,
+                    change_text: signed(change),
+                    pct,
+                    pct_text: pctText(pct),
+                    trend
+                };
+            }
+            out.deltas = deltas;
+        }
+
+        items.push(out);
+    }
+
+    const as_of = items.reduce((mx, it) => {
+        const t = it.periodStart ? new Date(it.periodStart).getTime() : 0;
+        return t > mx ? t : mx;
+    }, 0);
+
+    return {
+        bank,
+        since,
+        as_of: as_of ? new Date(as_of) : null,
+        count: items.length,
+        currencies: items
+    };
+}
